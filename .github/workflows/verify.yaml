@@ -1,0 +1,63 @@
+name: verify
+# Runs the simulation, lint, bug-injection check and Yosys synthesis in the cloud
+# and uploads the logs. No local installation needed.
+on: [push, workflow_dispatch]
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v6
+
+      - name: Install tools
+        shell: bash
+        run: sudo apt-get update && sudo apt-get install -y iverilog yosys verilator make
+
+      - name: Tool versions
+        shell: bash
+        run: |
+          iverilog -V | head -1
+          yosys -V
+          verilator --version
+
+      - name: Self-checking testbench
+        shell: bash
+        run: make sim
+
+      - name: Lint (Verilator -Wall)
+        shell: bash
+        run: make lint
+
+      - name: Bug-injection (mutation) check
+        shell: bash
+        run: make mutate
+
+      - name: Yosys synthesis (generic + Sky130 mapped)
+        shell: bash
+        run: make synth
+
+      - name: Summary
+        if: always()
+        shell: bash
+        run: |
+          {
+            echo "## Verification summary"
+            echo '```'
+            tail -5 verification/sim_log.txt 2>/dev/null
+            grep -c caught verification/mutation_results.txt 2>/dev/null | sed 's/^/mutants caught: /'
+            grep -E "Number of cells|Chip area" synthesis/stat_sky130.txt 2>/dev/null
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload logs
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: verification-logs
+          path: |
+            verification/sim_log.txt
+            verification/mutation_results.txt
+            synthesis/stat_generic.txt
+            synthesis/stat_sky130.txt
+            synthesis/yosys_generic_log.txt
+            synthesis/yosys_sky130_log.txt
