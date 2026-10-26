@@ -11,4 +11,4 @@ Work submitted for the RTL design workshop.
 | [assignment-1](assignment-1) | Smart Water Tank Pump Controller with Overflow Protection: RTL, verification, synthesis, gate-level simulation and GDS layout |
 | `rtl_video_new.mp4` | Demo video |
 
-The cloud layout run for the assignment is on the [`gds-run`](../../tree/gds-run) branch.
+The cloud layout run for the assignment is on the [`gds-run`](https://github.com/mudidenivamshi/RTL_DESIGN_WORKSHOP_VAMSHI/tree/gds-run) branch.
